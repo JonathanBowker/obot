@@ -10,7 +10,9 @@
 	# except the bootstrap-login endpoint.
 	#
 	# Obot's bootstrap login uses the Authorization: Bearer header, which can't coexist with Basic Auth.
-	@needsBasic not path /api/bootstrap/login
+	@needsBasic {
+		not path /api/bootstrap/login
+	}
 	basic_auth @needsBasic {
 		{$OBOT_BASIC_AUTH_USER} {$OBOT_BASIC_AUTH_HASH}
 	}
