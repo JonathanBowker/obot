@@ -50,6 +50,7 @@ jobs:
           set -euo pipefail
           APP_DIR="${{ secrets.DO_APP_DIR || '/opt/obot' }}"
           ssh "${{ secrets.DO_USER }}@${{ secrets.DO_HOST }}" "mkdir -p '${APP_DIR}'"
+          rsync -az deploy/server-bootstrap-ubuntu.sh "${{ secrets.DO_USER }}@${{ secrets.DO_HOST }}:${APP_DIR}/"
           CADDY_SRC="deploy/Caddyfile"
           if [[ "${{ secrets.DO_USE_BASIC_AUTH }}" == "true" ]]; then
             CADDY_SRC="deploy/Caddyfile.basic-auth"
@@ -57,6 +58,13 @@ jobs:
           rsync -az deploy/docker-compose.yml "${CADDY_SRC}" "${{ secrets.DO_USER }}@${{ secrets.DO_HOST }}:${APP_DIR}/"
           ssh "${{ secrets.DO_USER }}@${{ secrets.DO_HOST }}" "mv -f '${APP_DIR}/$(basename "${CADDY_SRC}")' '${APP_DIR}/Caddyfile'"
           rsync -az .env.remote "${{ secrets.DO_USER }}@${{ secrets.DO_HOST }}:${APP_DIR}/.env"
+
+      - name: Bootstrap droplet (install Docker)
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP_DIR="${{ secrets.DO_APP_DIR || '/opt/obot' }}"
+          ssh "${{ secrets.DO_USER }}@${{ secrets.DO_HOST }}" "sudo bash '${APP_DIR}/server-bootstrap-ubuntu.sh'"
 
       - name: Deploy (pull + restart)
         shell: bash
