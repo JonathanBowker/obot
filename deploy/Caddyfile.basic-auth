@@ -1,0 +1,16 @@
+{
+	# Change this if you want to use a specific email for Let's Encrypt.
+	# email you@example.com
+}
+
+{$OBOT_DOMAIN} {
+	encode gzip zstd
+
+	# Protect the whole site with a username/password prompt (in addition to Obot auth providers).
+	# Generate OBOT_BASIC_AUTH_HASH with:
+	#   docker run --rm caddy:2.8-alpine caddy hash-password --plaintext 'your-password'
+	basicauth /* {$OBOT_BASIC_AUTH_USER} {$OBOT_BASIC_AUTH_HASH}
+
+	reverse_proxy obot:8080
+}
+

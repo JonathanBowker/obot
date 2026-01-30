@@ -1,0 +1,9 @@
+{
+	# Change this if you want to use a specific email for Let's Encrypt.
+	# email you@example.com
+}
+
+{$OBOT_DOMAIN} {
+	encode gzip zstd
+	reverse_proxy obot:8080
+}

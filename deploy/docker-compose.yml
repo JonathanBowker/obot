@@ -1,0 +1,46 @@
+services:
+  obot:
+    image: ghcr.io/obot-platform/obot:latest
+    container_name: obot
+    restart: unless-stopped
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      GITHUB_AUTH_TOKEN: ${GITHUB_AUTH_TOKEN:-}
+
+      # Important for OAuth redirects and generated URLs.
+      OBOT_SERVER_HOSTNAME: ${OBOT_SERVER_HOSTNAME}
+
+      # Recommended: enable auth and use an external auth provider (Google, GitHub, etc).
+      OBOT_SERVER_ENABLE_AUTHENTICATION: ${OBOT_SERVER_ENABLE_AUTHENTICATION:-true}
+      OBOT_BOOTSTRAP_TOKEN: ${OBOT_BOOTSTRAP_TOKEN}
+      OBOT_SERVER_AUTH_OWNER_EMAILS: ${OBOT_SERVER_AUTH_OWNER_EMAILS:-}
+      OBOT_SERVER_AUTH_ADMIN_EMAILS: ${OBOT_SERVER_AUTH_ADMIN_EMAILS:-}
+
+      # DigitalOcean droplet uses Docker runtime backend by default, but set explicitly.
+      OBOT_SERVER_MCPRUNTIME_BACKEND: ${OBOT_SERVER_MCPRUNTIME_BACKEND:-docker}
+    volumes:
+      - obot-data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  caddy:
+    image: caddy:2.8-alpine
+    container_name: obot-caddy
+    restart: unless-stopped
+    depends_on:
+      - obot
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      OBOT_DOMAIN: ${OBOT_DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  obot-data:
+  caddy-data:
+  caddy-config:
+
