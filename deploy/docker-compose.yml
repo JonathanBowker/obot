@@ -34,6 +34,8 @@ services:
       - "443:443"
     environment:
       OBOT_DOMAIN: ${OBOT_DOMAIN}
+      OBOT_BASIC_AUTH_USER: ${OBOT_BASIC_AUTH_USER:-}
+      OBOT_BASIC_AUTH_HASH: ${OBOT_BASIC_AUTH_HASH:-}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-data:/data
@@ -43,4 +45,3 @@ volumes:
   obot-data:
   caddy-data:
   caddy-config:
-
