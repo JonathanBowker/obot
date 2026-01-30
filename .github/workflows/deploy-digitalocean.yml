@@ -50,7 +50,12 @@ jobs:
           set -euo pipefail
           APP_DIR="${{ secrets.DO_APP_DIR || '/opt/obot' }}"
           ssh "${{ secrets.DO_USER }}@${{ secrets.DO_HOST }}" "mkdir -p '${APP_DIR}'"
-          rsync -az deploy/docker-compose.yml deploy/Caddyfile deploy/Caddyfile.basic-auth "${{ secrets.DO_USER }}@${{ secrets.DO_HOST }}:${APP_DIR}/"
+          CADDY_SRC="deploy/Caddyfile"
+          if [[ "${{ secrets.DO_USE_BASIC_AUTH }}" == "true" ]]; then
+            CADDY_SRC="deploy/Caddyfile.basic-auth"
+          fi
+          rsync -az deploy/docker-compose.yml "${CADDY_SRC}" "${{ secrets.DO_USER }}@${{ secrets.DO_HOST }}:${APP_DIR}/"
+          ssh "${{ secrets.DO_USER }}@${{ secrets.DO_HOST }}" "mv -f '${APP_DIR}/$(basename "${CADDY_SRC}")' '${APP_DIR}/Caddyfile'"
           rsync -az .env.remote "${{ secrets.DO_USER }}@${{ secrets.DO_HOST }}:${APP_DIR}/.env"
 
       - name: Deploy (pull + restart)
