@@ -71,6 +71,8 @@ docker run --rm caddy:2.8-alpine caddy hash-password --plaintext 'your-password'
 
 Then set `OBOT_BASIC_AUTH_USER` + `OBOT_BASIC_AUTH_HASH` in `/opt/obot/.env`.
 
+Important: Docker Compose treats `$` specially when it parses `.env`, so **escape bcrypt hashes** by doubling `$` → `$$` before saving them.
+
 At minimum set:
 - `OBOT_DOMAIN=obot.yourdomain.com` (or `<DROPLET_IP>.nip.io`)
 - `OBOT_SERVER_HOSTNAME=obot.yourdomain.com` (or `<DROPLET_IP>.nip.io`)
