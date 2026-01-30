@@ -133,4 +133,5 @@ Create these GitHub repo secrets:
 - `DO_USER`: usually `root`
 - `DO_SSH_PRIVATE_KEY`: private key for SSH
 - `DO_APP_DIR`: optional, defaults to `/opt/obot`
+- `DO_USE_BASIC_AUTH`: optional, set to `true` to deploy `Caddyfile.basic-auth` as `Caddyfile`
 - `OBOT_ENV`: full contents of the droplet `.env` file (use `deploy/env.example` as a base)
