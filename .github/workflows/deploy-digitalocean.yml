@@ -19,12 +19,17 @@ jobs:
 
       - name: Validate secrets
         shell: bash
+        env:
+          DO_HOST: ${{ secrets.DO_HOST }}
+          DO_USER: ${{ secrets.DO_USER }}
+          DO_SSH_PRIVATE_KEY: ${{ secrets.DO_SSH_PRIVATE_KEY }}
+          OBOT_ENV: ${{ secrets.OBOT_ENV }}
         run: |
           set -euo pipefail
-          test -n "${{ secrets.DO_HOST }}"
-          test -n "${{ secrets.DO_USER }}"
-          test -n "${{ secrets.DO_SSH_PRIVATE_KEY }}"
-          test -n "${{ secrets.OBOT_ENV }}"
+          test -n "${DO_HOST}"
+          test -n "${DO_USER}"
+          test -n "${DO_SSH_PRIVATE_KEY}"
+          test -n "${OBOT_ENV}"
 
       - name: Setup SSH agent
         uses: webfactory/ssh-agent@v0.9.0
@@ -33,42 +38,59 @@ jobs:
 
       - name: Add host key
         shell: bash
+        env:
+          DO_HOST: ${{ secrets.DO_HOST }}
         run: |
           set -euo pipefail
           mkdir -p ~/.ssh
-          ssh-keyscan -H "${{ secrets.DO_HOST }}" >> ~/.ssh/known_hosts
+          ssh-keyscan -H "${DO_HOST}" >> ~/.ssh/known_hosts
 
       - name: Prepare env file
         shell: bash
+        env:
+          OBOT_ENV: ${{ secrets.OBOT_ENV }}
         run: |
           set -euo pipefail
-          printf '%s' "${{ secrets.OBOT_ENV }}" > .env.remote
+          printf '%s' "${OBOT_ENV}" > .env.remote
 
       - name: Upload deployment files
         shell: bash
+        env:
+          DO_HOST: ${{ secrets.DO_HOST }}
+          DO_USER: ${{ secrets.DO_USER }}
+          DO_APP_DIR: ${{ secrets.DO_APP_DIR }}
+          DO_USE_BASIC_AUTH: ${{ secrets.DO_USE_BASIC_AUTH }}
         run: |
           set -euo pipefail
-          APP_DIR="${{ secrets.DO_APP_DIR || '/opt/obot' }}"
-          ssh "${{ secrets.DO_USER }}@${{ secrets.DO_HOST }}" "mkdir -p '${APP_DIR}'"
-          rsync -az deploy/server-bootstrap-ubuntu.sh "${{ secrets.DO_USER }}@${{ secrets.DO_HOST }}:${APP_DIR}/"
+          APP_DIR="${DO_APP_DIR:-/opt/obot}"
+          ssh "${DO_USER}@${DO_HOST}" "mkdir -p '${APP_DIR}'"
+          rsync -az deploy/server-bootstrap-ubuntu.sh "${DO_USER}@${DO_HOST}:${APP_DIR}/"
           CADDY_SRC="deploy/Caddyfile"
-          if [[ "${{ secrets.DO_USE_BASIC_AUTH }}" == "true" ]]; then
+          if [[ "${DO_USE_BASIC_AUTH:-}" == "true" ]]; then
             CADDY_SRC="deploy/Caddyfile.basic-auth"
           fi
-          rsync -az deploy/docker-compose.yml "${CADDY_SRC}" "${{ secrets.DO_USER }}@${{ secrets.DO_HOST }}:${APP_DIR}/"
-          ssh "${{ secrets.DO_USER }}@${{ secrets.DO_HOST }}" "mv -f '${APP_DIR}/$(basename "${CADDY_SRC}")' '${APP_DIR}/Caddyfile'"
-          rsync -az .env.remote "${{ secrets.DO_USER }}@${{ secrets.DO_HOST }}:${APP_DIR}/.env"
+          rsync -az deploy/docker-compose.yml "${CADDY_SRC}" "${DO_USER}@${DO_HOST}:${APP_DIR}/"
+          ssh "${DO_USER}@${DO_HOST}" "mv -f '${APP_DIR}/$(basename "${CADDY_SRC}")' '${APP_DIR}/Caddyfile'"
+          rsync -az .env.remote "${DO_USER}@${DO_HOST}:${APP_DIR}/.env"
 
       - name: Bootstrap droplet (install Docker)
         shell: bash
+        env:
+          DO_HOST: ${{ secrets.DO_HOST }}
+          DO_USER: ${{ secrets.DO_USER }}
+          DO_APP_DIR: ${{ secrets.DO_APP_DIR }}
         run: |
           set -euo pipefail
-          APP_DIR="${{ secrets.DO_APP_DIR || '/opt/obot' }}"
-          ssh "${{ secrets.DO_USER }}@${{ secrets.DO_HOST }}" "sudo bash '${APP_DIR}/server-bootstrap-ubuntu.sh'"
+          APP_DIR="${DO_APP_DIR:-/opt/obot}"
+          ssh "${DO_USER}@${DO_HOST}" "sudo bash '${APP_DIR}/server-bootstrap-ubuntu.sh'"
 
       - name: Deploy (pull + restart)
         shell: bash
+        env:
+          DO_HOST: ${{ secrets.DO_HOST }}
+          DO_USER: ${{ secrets.DO_USER }}
+          DO_APP_DIR: ${{ secrets.DO_APP_DIR }}
         run: |
           set -euo pipefail
-          APP_DIR="${{ secrets.DO_APP_DIR || '/opt/obot' }}"
-          ssh "${{ secrets.DO_USER }}@${{ secrets.DO_HOST }}" "cd '${APP_DIR}' && docker compose pull && docker compose up -d"
+          APP_DIR="${DO_APP_DIR:-/opt/obot}"
+          ssh "${DO_USER}@${DO_HOST}" "cd '${APP_DIR}' && docker compose pull && docker compose up -d"
